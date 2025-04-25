@@ -1,0 +1,31 @@
+
+The limitation arises because CS-Flow (as described) doesn't have explicit positional encoding. This means:
+
+The model relies solely on the convolutional layers to learn about the "where" aspect. It doesn't have a separate mechanism to tell it that a feature at one location is inherently different from the same feature at another location, unless that difference is learned through the convolutional weights based on the surrounding context.
+When the feature maps are downsampled (to lower resolutions), some fine-grained spatial information is inevitably lost. The localization map generated from these lower-resolution features will therefore have limited spatial precision.
+
+
+
+1. What CFLOW-AD Does
+CFLOW-AD takes multi-scale feature maps from a frozen backbone (usually EfficientNet).
+
+Then it flattens the spatial dimensions into a sequence.
+
+Since the model loses spatial layout in the flattening, it adds hardcoded positional embeddings (like in Transformers) to inject “where” the pixel came from.
+
+⚠️ These are not learned, just fixed sine/cosine encodings based on (x, y) positions.
+
+2. The Problem with Hardcoded Positional Embeddings
+💡 You’re telling the model where things are — but not letting it learn how spatial layout matters.
+
+🔸 Limitations:
+No flexibility: The position info is the same regardless of the data. It can’t adjust for different textures or patterns.
+
+Doesn’t capture object structure: A scratch on a shiny car hood vs. scratch on brushed metal will have different context, but same (x, y) encoding.
+
+Unaware of spatial relationships: Positional encoding doesn't tell how pixels relate spatially — it just says where they are.
+
+Inadequate for complex anomalies: In real industrial images, anomalies aren’t just blobs — they follow edges, textures, seams, etc.
+
+Think of it like saying: “This pixel is at (x=5, y=12)” — okay, but what’s around it? The model doesn’t know.
+
