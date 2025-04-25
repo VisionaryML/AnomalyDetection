@@ -1,0 +1,144 @@
+WinCLIP: Zero-/Few-Shot Anomaly Classification and Segmentation
+
+
+
+CLIP (Contrastive Language–Image Pre-training) is a model by OpenAI:
+
+Was the first model trained on huge amounts of internet image-text pairs.
+
+This helped it learn very general knowledge, so it can do many tasks without being retrained.
+
+that Connects images and text in a smart way.
+
+You can give it an image and a description (like "a photo of a cat"), and it can tell how well they match.
+
+It’s great at zero-shot learning.
+
+But… it doesn’t work well for anomaly detection right out of the box.
+
+solution:
+
+
+winclip:
+Hence, we propose window-based CLIP (WinCLIP)
+with (1) a compositional ensemble on state words and
+prompt templates and (2) efficient extraction and aggregation of window/patch/image-level features aligned with
+text.
+
+winclip+: 
+We also propose its few-normal-shot extension WinCLIP+, which uses complementary information from normal images.
+
+
+For example, in Figure 2(a), language provides information on the soldering defect, while minor scratches/stains
+on background are acceptable. In spite of these advantages,
+we are not aware of prior work leveraging vision-language
+models for anomaly classification and segmentation.
+
+
+
+To summarize, our main contributions are:
+• We introduce a compositional prompt ensemble, which
+improves zero-shot anomaly classification over the
+na¨ıve CLIP based zero-shot classification.
+• Using the pre-trained CLIP model, we propose WinCLIP, that efficiently extract and aggregate multi-scale
+spatial features aligned with language for zero-shot
+anomaly segmentation. As far as we know, we are
+the first to explore language-guided zero-shot anomaly
+classification and segmentation.
+• We propose a simple reference association method,
+which is applied to multi-scale feature maps for image based few-shot anomaly segmentation. WinCLIP+
+combines the language-guided and vision-only methods
+for few-normal-shot anomaly recognition.
+• We show via extensive experiments on MVTec-AD
+and VisA benchmarks that our proposed methods WinCLIP/WinCLIP+ outperform the state-of-the-art methods in zero-/few-shot anomaly classification and segmentation with large margins.
+
+
+related work:
+
+Topic                | What’s It About?                                          | Challenge               | Recent Solutions
+Anomaly Detection    | Detecting defective items                                 | Few examples of defects | Few-shot methods, RegAD, ViT, VisA dataset
+State Classification | Understanding object conditions (like “wet” or “cracked”) | Fine-grained and subtle | Attribute datasets, GNNs to learn relationships
+
+Background Summary:
+Anomaly classification (AC) and segmentation (AS) are key tasks in industrial inspection, aiming to detect whether an image (AC) or specific image regions (AS) are abnormal. Due to the scarcity of anomalous samples, most methods follow a one-class setup, training only on normal images. This paper focuses on few-shot (1–4 samples) and zero-shot scenarios using task-specific text tags to guide the process.
+
+CLIP (Contrastive Language-Image Pretraining) is a vision-language model trained on large-scale image-text pairs. It enables zero-shot classification by matching an image with a set of text prompts using cosine similarity. The use of prompt templates like “a photo of a [defect]” and prompt ensembles boosts performance. This work explores how to adapt CLIP’s general knowledge to anomaly detection, by better utilizing prompt design and image-region features for both classification and segmentation tasks with minimal or no training data.
+
+
+
+4. WinCLIP and WinCLIP+:
+
+CLIP pre-trained by large web
+dataset provides a powerful representation with good alignment between text and images for anomaly tasks (b) specific
+definition about anomaly is necessary for good performance
+
+
+workflow of winclip:
+
+Image Breakdown:
+WinCLIP looks at small parts (windows) of the image, like a sliding puzzle—each window covers a small region of the image.
+
+Feature Extraction:
+For each small region, it uses CLIP to get a feature vector (a list of numbers representing that patch).
+
+Compare with Text:
+Each feature vector is compared to text descriptions like “normal object” or “defect” using similarity (how close they are). This gives a score—how likely that region is normal or abnormal.
+
+Combine Scores:
+Since regions overlap, each pixel gets multiple scores (from different windows). These are combined using harmonic averaging, which gives more importance to normal predictions (to reduce false alarms).
+
+reference : Harmonic aggregation of windows
+
+Multi-Scale Strategy:
+WinCLIP doesn’t just use one size of window—it uses small, medium, and large windows to catch small scratches and large cracks. It then blends the results from all scales.
+
+workflow of winclip+:
+
+Memory Storage:
+It stores features from the normal images into memory (like building a mini-database of what “normal” looks like).
+
+Comparison with Test Image:
+For each region in the test image, it compares the features with those stored normal features using cosine similarity. If it’s very different, it’s likely an anomaly.
+
+Multi-Scale Matching:
+This matching is done at different levels:
+Small patches (fine details),
+Medium patches,
+Large/global context (overall shape).
+
+Combining Everything:
+Finally, it combines:
+Scores from normal references (WinCLIP+),
+Scores from language/text (WinCLIP), to make a better and more accurate prediction.
+
+
+
+limitations:
+
+1) it is using a clip so Challenges with Custom Datasets.
+
+2) "For a set of class words C = {c1, · · · , ck}, it has shown
+that accompanying each label word c ∈ C with a prompt template, e.g., “a photo of a [c]”, improves accuracy
+over the case without templates. Moreover, an ensemble
+of prompt embeddings that aggregates multiple (80) templates e.g., “a cropped photo of a [c]”, can further boost the performance [27]."
+if we take reference to this than accuracy depends on prompt templete.
+
+3) Performance on Segmentation Metrics: Despite achieving high pixel-wise AUROC scores, the models still have relatively low F1-max scores for anomaly segmentation on both MVTec-AD and VisA datasets. The best models achieve below 60% F1-max, indicating that accurate pixel-level localization in low-shot settings remains a difficult problem. so it is basically localization problem.
+
+4)Failure cases. We present some failure examples from both MVTec-AD and VisA for language driven zero-shot WinCLIP in
+Figure 11. Note that the normal images are shown just for better illustration and are not used in model prediction. The first
+major factor causing the failure is the logical anomaly [2] illustrated in Figure 11(a), e.g., misplaced axis in cable, missing text
+on capsule, missing capacitor in PCB1 and bent component in PCB3. Such type of anomalies need to be clarified by normal
+reference images while language might be not sufficient. The issues are alleviated by our few-normal-shot WinCLIP+. The
+second major factor refers to tiny defect illustrated in Figure 11(b), such as the ones in carpet, wood, capsule, macaroni1. We
+conjecture that spatial features with more local details might improve these cases, which is left for future exploration. The
+third major factor is the irrelevant deviation from normality that are not defects of interests illustrated in Figure 11(c), e.g.,
+the tiny red/white dots in pill/hazelnut, extra ingredient on cashew, designed holes and acceptable scratches in PCB2. We
+hypothesize that more clarification on these deviation and a pre-trained model with better understanding on these states might
+alleviate the problem. Lastly, although WinCLIP can roughly localize anomalies such as the cases in bottle, tile, PCB4 and
+fryum, it makes some errors around the true positives, illustrated in Figure 11(d). However, we argue this is minor as the rough
+anomaly localization is sufficient to explain where the defects are for visual inspection.
+
+
+	
+

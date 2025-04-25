@@ -1,0 +1,76 @@
+## 🔴 Limitation 1: **High Memory & Computation Cost**
+
+### 📌 What it means:
+- KDE needs to **store and compare all training features** when estimating densities.
+- In deep feature space, this becomes a **huge amount of data**, especially with high-res images and deeper layers of CNNs.
+
+### 🧠 Why it’s a problem:
+- It gets **slow and memory-hungry**, especially with large datasets.
+- Hard to scale to **real-time systems** or **edge devices** (like factory-line cameras).
+
+### 🔧 Example:
+Imagine you train on 5,000 high-res images using ResNet50.  
+Each feature map might be 2048-dimensions — that’s a ton of data!  
+When a test image comes in, it has to compare its features to **all 5,000 samples**, which is **slow**.
+
+---
+
+## 🔴 Limitation 2: **Curse of Dimensionality**
+
+### 📌 What it means:
+- KDE struggles in **high-dimensional spaces** — this is called the “curse of dimensionality”.
+- As dimensions go up, data becomes sparse, and **density estimates become unreliable**.
+
+### 🧠 Why it’s a problem:
+- Deep features from CNNs are often very high-dimensional.
+- KDE may say, “this is rare,” not because it’s truly rare, but because **density estimation is poor** in that dimension.
+
+### 🔧 Example:
+Suppose a slightly brighter image of a normal screw creates a feature vector that lies on the edge of the KDE model.  
+Even though it’s just **a lighting change**, KDE might wrongly flag it as anomalous because the high-dimensional estimate is **not smooth or accurate**.
+
+---
+
+## 🔴 Limitation 3: **Sensitivity to Feature Choice**
+
+### 📌 What it means:
+- DFKDE's output heavily depends on **which CNN** and **which layer** you extract features from.
+- Different CNNs and layers capture **different types of patterns** (textures, shapes, etc.).
+
+### 🧠 Why it’s a problem:
+- There’s no one-size-fits-all layer — poor layer choice = bad detection.
+- It needs **careful tuning** and might not generalize well between datasets.
+
+### 🔧 Example:
+Say you use a shallow CNN layer that focuses on textures — it might miss shape anomalies.  
+Or you use a very deep layer — it may ignore low-level texture defects like **surface cracks**, and **fail to detect real damage**.
+
+---
+
+## 🔴 Limitation 4: **Local Variations or Noise Can Mislead the Model**
+
+### 📌 What it means:
+- KDE sees *any deviation* from the normal distribution as a potential anomaly — even **harmless variations** like lighting, shadow, or camera blur.
+
+### 🧠 Why it’s a problem:
+- Model may raise **false alarms** for images that are **technically normal**, but differ slightly due to noise or conditions.
+
+### 🔧 Example:
+Imagine two perfectly normal screws — one under bright light, one under dim light.  
+The lighting causes their features to shift slightly.  
+KDE might say the dim one is anomalous just because it looks **less like the training distribution**.
+
+---
+
+## 🔴 Limitation 5: **No Localization of Anomalies**
+
+### 📌 What it means:
+- DFKDE gives you a **score** for the whole image, but **doesn’t tell you where** the anomaly is.
+
+### 🧠 Why it’s a problem:
+- In real-world applications (e.g., manufacturing or medical imaging), you often need to **pinpoint the defect**, not just know it exists.
+
+### 🔧 Example:
+You get a score of 0.91 anomaly probability for a toothbrush.  
+But where’s the problem? The handle? The bristles? Background?  
+DFKDE can’t tell — you’ll need **another method** to localize it.
